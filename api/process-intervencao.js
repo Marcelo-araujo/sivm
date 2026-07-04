@@ -6,13 +6,28 @@ export default async function handler(request, response) {
     return response.status(405).json({ error: 'Método não permitido' });
   }
 
-  const { equipamento_id, texto_bruto } = request.body;
+  const { nome_equipamento, texto_bruto } = request.body;
 
-  if (!equipamento_id || !texto_bruto) {
-    return response.status(400).json({ error: 'equipamento_id e texto_bruto são obrigatórios' });
+  if (!nome_equipamento || !texto_bruto) {
+    return response.status(400).json({ error: 'nome_equipamento e texto_bruto são obrigatórios' });
   }
 
   try {
+    // 0. Buscar ou Criar Equipamento
+    let equipId;
+    const findEquip = await sql`SELECT id FROM equipamentos WHERE nome ILIKE ${nome_equipamento} LIMIT 1`;
+    
+    if (findEquip.rowCount > 0) {
+      equipId = findEquip.rows[0].id;
+    } else {
+      const newEquip = await sql`
+        INSERT INTO equipamentos (nome, status_atual) 
+        VALUES (${nome_equipamento}, 'Verde') 
+        RETURNING id
+      `;
+      equipId = newEquip.rows[0].id;
+    }
+
     // 1. Instanciar Gemini
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
@@ -54,7 +69,7 @@ export default async function handler(request, response) {
         downtime_evitado_horas, 
         resolvido_definitivo
       ) VALUES (
-        ${equipamento_id},
+        ${equipId},
         ${texto_bruto},
         ${iaData.causa_raiz},
         ${iaData.sistema_afetado},
@@ -71,7 +86,7 @@ export default async function handler(request, response) {
     else if (iaData.severidade === 'Alta' && !iaData.resolvido_definitivo) novoStatus = 'Amarelo';
     
     if (novoStatus !== 'Verde') {
-      await sql`UPDATE equipamentos SET status_atual = ${novoStatus} WHERE id = ${equipamento_id}`;
+      await sql`UPDATE equipamentos SET status_atual = ${novoStatus} WHERE id = ${equipId}`;
     }
 
     return response.status(200).json({ 

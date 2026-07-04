@@ -28,7 +28,7 @@ export default function MobileInput() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          equipamento_id: selectedEquip,
+          nome_equipamento: selectedEquip,
           texto_bruto: textoBruto
         })
       });
@@ -70,19 +70,21 @@ export default function MobileInput() {
           <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500, color: 'var(--text-secondary)' }}>
             Equipamento
           </label>
-          <select 
+          <input 
+            type="text"
+            list="equipamentos-list"
             className="input-field" 
+            placeholder="Digite ou selecione a máquina..."
             value={selectedEquip}
             onChange={(e) => setSelectedEquip(e.target.value)}
             disabled={status === 'loading'}
             required
-            style={{ appearance: 'none', backgroundColor: 'rgba(255,255,255,0.05)' }}
-          >
-            <option value="" disabled>Selecione a máquina...</option>
+          />
+          <datalist id="equipamentos-list">
             {equipamentos.map(eq => (
-              <option key={eq.id} value={eq.id} style={{ color: '#000' }}>{eq.nome}</option>
+              <option key={eq.id} value={eq.nome} />
             ))}
-          </select>
+          </datalist>
         </div>
 
         <div style={{ marginBottom: '1.5rem' }}>
