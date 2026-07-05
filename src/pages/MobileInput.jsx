@@ -93,8 +93,8 @@ export default function MobileInput() {
           </datalist>
         </div>
 
-        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
-          <div style={{ flex: 1 }}>
+        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+          <div style={{ flex: '1 1 140px' }}>
             <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
               Início
             </label>
@@ -107,7 +107,7 @@ export default function MobileInput() {
               disabled={status === 'loading'}
             />
           </div>
-          <div style={{ flex: 1 }}>
+          <div style={{ flex: '1 1 140px' }}>
             <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
               Fim
             </label>
