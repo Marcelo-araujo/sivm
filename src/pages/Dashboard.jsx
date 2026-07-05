@@ -21,12 +21,11 @@ export default function Dashboard() {
 
   const dashboardRef = useRef(null);
 
-  const fetchMetrics = async () => {
+  const fetchMetrics = async (overrideInicio = null, overrideFim = null) => {
     setLoading(true);
     try {
-      // Converte a string local para UTC (formato esperado pelo PG)
-      const inicioUTC = new Date(filtroInicio).toISOString();
-      const fimUTC = new Date(filtroFim).toISOString();
+      const inicioUTC = new Date(overrideInicio || filtroInicio).toISOString();
+      const fimUTC = new Date(overrideFim || filtroFim).toISOString();
       
       const response = await fetch(`/api/dashboard-metrics?inicio=${inicioUTC}&fim=${fimUTC}`);
       const data = await response.json();
@@ -38,6 +37,38 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const applyPreset = (preset) => {
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0]; 
+    
+    let novoInicio, novoFim;
+
+    if (preset === 'T1') {
+      novoInicio = `${todayStr}T07:00`;
+      novoFim = `${todayStr}T16:48`;
+    } else if (preset === 'T2') {
+      const tomorrow = new Date(now.getTime() + 24*60*60*1000);
+      novoInicio = `${todayStr}T16:48`;
+      novoFim = `${tomorrow.toISOString().split('T')[0]}T02:02`;
+    } else if (preset === 'T3') {
+      const tomorrow = new Date(now.getTime() + 24*60*60*1000);
+      novoInicio = `${todayStr}T22:18`;
+      novoFim = `${tomorrow.toISOString().split('T')[0]}T07:00`;
+    } else if (preset === 'Semana') {
+      const day = now.getDay();
+      const diffToMonday = now.getDate() - day + (day === 0 ? -6 : 1);
+      const monday = new Date(now.setDate(diffToMonday));
+      const friday = new Date(monday.getTime() + 4 * 24 * 60 * 60 * 1000);
+      
+      novoInicio = `${monday.toISOString().split('T')[0]}T00:00`;
+      novoFim = `${friday.toISOString().split('T')[0]}T23:59`;
+    }
+
+    setFiltroInicio(novoInicio);
+    setFiltroFim(novoFim);
+    fetchMetrics(novoInicio, novoFim);
   };
 
   useEffect(() => {
@@ -83,6 +114,13 @@ export default function Dashboard() {
           <p style={{ color: 'var(--text-secondary)', margin: '0.2rem 0 0 0' }}>Métricas traduzidas pelo SIVM</p>
         </div>
 
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+          <button onClick={() => applyPreset('T1')} style={{ padding: '6px 12px', background: 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.85rem' }}>T1 (07:00 - 16:48)</button>
+          <button onClick={() => applyPreset('T2')} style={{ padding: '6px 12px', background: 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.85rem' }}>T2 (16:48 - 02:02)</button>
+          <button onClick={() => applyPreset('T3')} style={{ padding: '6px 12px', background: 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.85rem' }}>T3 (22:18 - 07:00)</button>
+          <button onClick={() => applyPreset('Semana')} style={{ padding: '6px 12px', background: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold' }}>Resumo Semanal</button>
+        </div>
+
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap', background: 'rgba(255,255,255,0.05)', padding: '0.5rem 1rem', borderRadius: '8px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <label style={{ fontSize: '0.85rem', color: '#aaa' }}>Início:</label>
@@ -103,7 +141,7 @@ export default function Dashboard() {
             />
           </div>
           <button 
-            onClick={fetchMetrics}
+            onClick={() => fetchMetrics()}
             style={{ padding: '6px 12px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}
           >
             Filtrar
