@@ -6,35 +6,52 @@ import * as htmlToImage from 'html-to-image';
 export default function Dashboard() {
   const [metrics, setMetrics] = useState(null);
   const [radar, setRadar] = useState([]);
+  const [acoes, setAcoes] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [periodo, setPeriodo] = useState('24h');
+  
+  // Default: Últimas 12 horas
+  const now = new Date();
+  const twelveHoursAgo = new Date(now.getTime() - (12 * 60 * 60 * 1000));
+  
+  // Format for datetime-local (YYYY-MM-DDThh:mm)
+  const formatForInput = (d) => d.toISOString().slice(0, 16);
+  
+  const [filtroInicio, setFiltroInicio] = useState(formatForInput(twelveHoursAgo));
+  const [filtroFim, setFiltroFim] = useState(formatForInput(now));
+
   const dashboardRef = useRef(null);
 
+  const fetchMetrics = async () => {
+    setLoading(true);
+    try {
+      // Converte a string local para UTC (formato esperado pelo PG)
+      const inicioUTC = new Date(filtroInicio).toISOString();
+      const fimUTC = new Date(filtroFim).toISOString();
+      
+      const response = await fetch(`/api/dashboard-metrics?inicio=${inicioUTC}&fim=${fimUTC}`);
+      const data = await response.json();
+      if (data.metrics) setMetrics(data.metrics);
+      if (data.radar) setRadar(data.radar);
+      if (data.acoes) setAcoes(data.acoes);
+    } catch (err) {
+      console.error('Error fetching metrics', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchMetrics = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch(`/api/dashboard-metrics?periodo=${periodo}`);
-        const data = await response.json();
-        if (data.metrics) setMetrics(data.metrics);
-        if (data.radar) setRadar(data.radar);
-      } catch (err) {
-        console.error('Error fetching metrics', err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchMetrics();
     const interval = setInterval(fetchMetrics, 30000);
     return () => clearInterval(interval);
-  }, [periodo]);
+  }, []);
 
   const exportDashboard = () => {
     if (dashboardRef.current) {
       htmlToImage.toPng(dashboardRef.current, { backgroundColor: '#111827' })
         .then(function (dataUrl) {
           const link = document.createElement('a');
-          link.download = `sivm-relatorio-${periodo}-${new Date().toISOString().split('T')[0]}.png`;
+          link.download = `sivm-relatorio-${new Date().toISOString().split('T')[0]}.png`;
           link.href = dataUrl;
           link.click();
         })
@@ -66,28 +83,38 @@ export default function Dashboard() {
           <p style={{ color: 'var(--text-secondary)', margin: '0.2rem 0 0 0' }}>Métricas traduzidas pelo SIVM</p>
         </div>
 
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', padding: '4px' }}>
-            <button 
-              onClick={() => setPeriodo('24h')}
-              style={{ padding: '8px 16px', background: periodo === '24h' ? 'rgba(74,222,128,0.2)' : 'transparent', color: periodo === '24h' ? '#4ade80' : '#aaa', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}
-            >
-              Turno (24h)
-            </button>
-            <button 
-              onClick={() => setPeriodo('7d')}
-              style={{ padding: '8px 16px', background: periodo === '7d' ? 'rgba(74,222,128,0.2)' : 'transparent', color: periodo === '7d' ? '#4ade80' : '#aaa', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}
-            >
-              Semanal
-            </button>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap', background: 'rgba(255,255,255,0.05)', padding: '0.5rem 1rem', borderRadius: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <label style={{ fontSize: '0.85rem', color: '#aaa' }}>Início:</label>
+            <input 
+              type="datetime-local" 
+              value={filtroInicio}
+              onChange={(e) => setFiltroInicio(e.target.value)}
+              style={{ background: 'transparent', color: '#fff', border: '1px solid #444', borderRadius: '4px', padding: '4px 8px' }}
+            />
           </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <label style={{ fontSize: '0.85rem', color: '#aaa' }}>Fim:</label>
+            <input 
+              type="datetime-local" 
+              value={filtroFim}
+              onChange={(e) => setFiltroFim(e.target.value)}
+              style={{ background: 'transparent', color: '#fff', border: '1px solid #444', borderRadius: '4px', padding: '4px 8px' }}
+            />
+          </div>
+          <button 
+            onClick={fetchMetrics}
+            style={{ padding: '6px 12px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}
+          >
+            Filtrar
+          </button>
           
           <button 
             onClick={exportDashboard}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#3b82f6', color: '#fff', border: 'none', padding: '10px 16px', borderRadius: '8px', fontWeight: 600, cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#3b82f6', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', fontWeight: 600, cursor: 'pointer', marginLeft: 'auto' }}
           >
-            <Download size={18} />
-            Exportar Relatório
+            <Download size={16} />
+            Exportar
           </button>
         </div>
       </div>
@@ -142,6 +169,53 @@ export default function Dashboard() {
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
+          )}
+        </div>
+
+        {/* Histórico de Ações (Novo Feed) */}
+        <h2 style={{ fontSize: '1.25rem', marginTop: '3rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          Histórico de Ações
+        </h2>
+        <div className="glass-card" style={{ padding: '1.5rem', overflowX: 'auto' }}>
+          {loading ? (
+             <div className="flex-center">Carregando ações...</div>
+          ) : acoes.length === 0 ? (
+             <div className="flex-center" style={{ color: 'var(--text-secondary)' }}>Nenhuma intervenção registrada neste período.</div>
+          ) : (
+             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '700px' }}>
+               <thead>
+                 <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-secondary)' }}>
+                   <th style={{ padding: '10px 0' }}>Data/Hora</th>
+                   <th style={{ padding: '10px 0' }}>Máquina</th>
+                   <th style={{ padding: '10px 0' }}>Causa Raiz (Ação)</th>
+                   <th style={{ padding: '10px 0' }}>Severidade</th>
+                   <th style={{ padding: '10px 0', textAlign: 'right' }}>Horas Salvas</th>
+                 </tr>
+               </thead>
+               <tbody>
+                 {acoes.map(acao => (
+                   <tr key={acao.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                     <td style={{ padding: '12px 0', fontSize: '0.9rem' }}>
+                        {new Date(acao.data_ocorrencia).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}
+                     </td>
+                     <td style={{ padding: '12px 0', fontWeight: 'bold' }}>{acao.maquina}</td>
+                     <td style={{ padding: '12px 0', fontSize: '0.9rem', color: '#ccc' }}>{acao.causa_raiz}</td>
+                     <td style={{ padding: '12px 0' }}>
+                       <span style={{ 
+                         padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 600,
+                         background: acao.severidade === 'Crítica' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+                         color: acao.severidade === 'Crítica' ? '#ef4444' : '#fff'
+                       }}>
+                         {acao.severidade}
+                       </span>
+                     </td>
+                     <td style={{ padding: '12px 0', textAlign: 'right', fontWeight: 'bold', color: '#4ade80' }}>
+                       {acao.downtime_evitado_horas > 0 ? `+${acao.downtime_evitado_horas}h` : '-'}
+                     </td>
+                   </tr>
+                 ))}
+               </tbody>
+             </table>
           )}
         </div>
       </div>

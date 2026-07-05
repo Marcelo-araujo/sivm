@@ -1,0 +1,26 @@
+# MVP do SIVM Entregue! 🚀
+
+Toda a codificação do nosso **Sistema de Inteligência e Visibilidade de Manutenção** foi concluída e o código-fonte já está seguro no seu GitHub oficial: [Repositório SIVM](https://github.com/Marcelo-araujo/sivm).
+
+## O que foi construído nesta Evolução:
+
+### 1. Aplicativo Mobile (Fricção Zero)
+- [src/pages/MobileInput.jsx](file:///c:/Users/marce/Precificação/SIVM/src/pages/MobileInput.jsx): Uma interface ultraleve onde o técnico pesquisa ou cria uma máquina dinamicamente.
+- **Controle de Tempo**: Agora o técnico informa a Data e Hora exata de Início e Fim da manutenção, garantindo métricas reais.
+- **Feedback Imediato:** Assim que envia, a tela mostra os dados de inteligência extraídos (Downtime Evitado, Causa Raiz) antes mesmo do gerente ver.
+
+### 2. A "Mágica" da IA e Backend
+- [api/process-intervencao.js](file:///c:/Users/marce/Precificação/SIVM/api/process-intervencao.js): O motor do projeto. Recebe a requisição do mobile, aciona a Gemini API (`gemini-flash-latest`) para transformar o texto bruto no nosso JSON padronizado e salva tudo instantaneamente no Vercel Postgres, incluindo a janela exata de tempo da manutenção.
+- Regra de negócio automatizada: Se a IA classifica o problema como "Crítico" e paliativo, o status do equipamento muda para **Vermelho** automaticamente no banco.
+
+### 3. Dashboard Gerencial Premium e Fechamento de Turno
+- [src/pages/Dashboard.jsx](file:///c:/Users/marce/Precificação/SIVM/src/pages/Dashboard.jsx): Painel de visualização com tema Dark/Glassmorphism.
+- **Filtros Estratégicos:** Dois novos botões permitem que a gestão visualize os KPIs (Horas Salvas, Radar de Risco) baseados nas **Últimas 24 horas (Turno)** ou **Últimos 7 dias (Semanal)**.
+- **📸 Exportação de Relatório:** Adicionado um botão "Exportar Relatório". Com um clique, ele tira um "print" interno perfeito e estético de todo o Dashboard e baixa automaticamente um arquivo PNG pronto para ser enviado no grupo do WhatsApp da diretoria ou anexado no email de fim de turno.
+
+---
+
+> [!TIP]
+> ## Já está no ar!
+> Como o seu Vercel está conectado ao GitHub, todas essas atualizações já foram compiladas e devem estar rodando no seu link público oficial.
+> Se tiver inserido dados com datas recentes (nas últimas 24h), basta clicar em "Turno (24h)" para ver os números.

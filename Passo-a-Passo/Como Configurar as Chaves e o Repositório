@@ -1,0 +1,27 @@
+# Como Configurar as Chaves e o Repositório
+
+Aqui está o guia direto ao ponto para configurarmos as peças externas do MVP.
+
+## 1. Obtendo a chave do Banco de Dados (Vercel Postgres)
+1. Acesse o site da [Vercel](https://vercel.com/) e faça login (se não tiver conta, crie vinculando seu GitHub).
+2. Vá na aba **"Storage"** no menu principal.
+3. Clique em **"Create Database"** e escolha **"Postgres"**.
+4. Aceite os termos e dê um nome (ex: `sivm-db`). Escolha a região (se tiver `sa-east-1` ou Washington D.C que costuma ser padrão).
+5. Assim que for criado, a tela vai mostrar abas como `Quickstart`, `.env.local` etc.
+6. Copie a chave que começa com `POSTGRES_URL="postgres://..."` e cole no seu arquivo `.env` local.
+7. **Importante:** Vá na aba "Query" na Vercel e cole o conteúdo do nosso arquivo `vercel_postgres_setup.sql` lá e clique em "Run". Isso criará as tabelas.
+
+## 2. Obtendo a chave de IA (Google Gemini)
+Se você já tem uma chave e quiser reutilizá-la, ótimo. Caso precise gerar outra:
+1. Acesse o [Google AI Studio](https://aistudio.google.com/).
+2. Faça login com sua conta Google.
+3. No painel da esquerda, clique em **"Get API key"**.
+4. Clique no botão azul **"Create API key"** e gere uma chave num novo projeto.
+5. Copie a chave (é uma string longa) e cole no seu `.env` na linha `GEMINI_API_KEY=`.
+
+## 3. GitHub
+O GitHub é onde guardaremos o código na nuvem para que a Vercel possa "puxá-lo" e colocar o site no ar.
+1. No seu [GitHub](https://github.com/), clique no sinal de **+** no canto superior direito e em **New repository**.
+2. Dê o nome de `sivm` (ou algo de sua escolha), não marque nenhuma outra caixa e clique em **Create repository**.
+3. O GitHub vai te mostrar uma tela com instruções.
+4. Aqui no nosso terminal, eu já vou inicializar o Git localmente para você. Quando você criar o repositório lá, basta me passar o **link do repositório** (ex: `https://github.com/SeuUsuario/sivm.git`) e eu conectarei o nosso código local a ele!

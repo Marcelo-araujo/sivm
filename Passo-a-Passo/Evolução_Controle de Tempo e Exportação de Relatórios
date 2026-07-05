@@ -1,0 +1,37 @@
+# Evolução: Controle de Tempo e Exportação de Relatórios
+
+Este plano detalha a inclusão do rastreamento preciso de tempo nas intervenções e a nova funcionalidade gerencial de exportação de relatórios para fechamento de turno.
+
+## Critérios de Sucesso (Diretriz 06)
+- [ ] Formulário mobile deve coletar Data/Hora Inicial e Final.
+- [ ] Banco de dados atualizado sem perda de dados para suportar os novos campos.
+- [ ] Dashboard com botão "Exportar Relatório de Turno" que gera e baixa uma imagem do painel.
+- [ ] Dashboard com filtro de visualização (Turno / Semanal).
+
+> [!IMPORTANT]
+> ## Revisão do Usuário Necessária
+> 1. **Filtro de Turno:** Para o botão de "Turno", podemos assumir as "Últimas 12 horas" como padrão para o cálculo de Downtime Evitado e Resoluções, ou prefere "Últimas 24 horas"?
+> 2. **Banco de Dados:** Precisaremos rodar um comando SQL rápido lá no painel da Vercel para adicionar as colunas novas (`data_inicio` e `data_fim`). Eu fornecerei o comando, mas você precisará colá-lo na aba Query da Vercel.
+
+## Mudanças Propostas
+
+### 1. Banco de Dados (Vercel Postgres)
+Adição das novas colunas na tabela `intervencoes`.
+- Comando SQL a ser executado: `ALTER TABLE intervencoes ADD COLUMN data_inicio TIMESTAMP, ADD COLUMN data_fim TIMESTAMP;`
+
+### 2. Interface Mobile (`MobileInput.jsx`)
+- **[MODIFY]** Adicionar dois campos `<input type="datetime-local" />` (Início e Fim da Intervenção).
+- Enviar esses dados no payload JSON para a API.
+
+### 3. Backend Mágico (`api/process-intervencao.js`)
+- **[MODIFY]** Receber e inserir `data_inicio` e `data_fim` no comando `INSERT` do Postgres.
+
+### 4. Funcionalidade de Exportação e Filtros (`Dashboard.jsx` e `api/dashboard-metrics.js`)
+- **[NEW]** Instalar a biblioteca `html-to-image` para capturar a tela do React e gerar o PNG perfeito do dashboard.
+- **[MODIFY]** Modificar `Dashboard.jsx` para incluir os botões de filtro (Turno Atual vs Semana) e o botão "📸 Exportar Relatório".
+- **[MODIFY]** Modificar `api/dashboard-metrics.js` para aceitar um parâmetro `?periodo=turno` ou `?periodo=semana` e ajustar o `WHERE` das consultas SQL.
+
+## Plano de Verificação
+- Inserir uma nova intervenção com datas retroativas e validar se salva no banco.
+- Testar o botão de "Exportar Relatório" em ambiente local e verificar a qualidade/legibilidade da imagem PNG gerada.
+- Alternar entre "Turno" e "Semana" e validar se os números (KPIs) mudam.

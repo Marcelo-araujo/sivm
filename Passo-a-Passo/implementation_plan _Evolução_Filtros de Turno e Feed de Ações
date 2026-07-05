@@ -1,0 +1,33 @@
+# Evolução: Filtros de Turno e Feed de Ações
+
+Este plano visa refinar a precisão gerencial do SIVM, trazendo clareza para "o que exatamente foi feito" durante o turno, além dos números.
+
+## Análise Crítica (Diretriz 01)
+Sua observação foi cirúrgica. Apenas exibir "80 horas salvas" sem mostrar o que gerou essa economia faz o painel parecer uma "caixa preta" para quem está assumindo o próximo turno. O relatório de fechamento de turno precisa do contexto técnico (a ação) acoplado ao resultado financeiro (a métrica).
+
+## Critérios de Sucesso (Diretriz 06)
+- [ ] O filtro de dashboard deve permitir 12 horas e/ou escolha exata de início e fim.
+- [ ] O dashboard deve exibir uma lista/tabela ("Feed de Intervenções") detalhando a máquina, a causa raiz (ação) e a severidade de cada relato.
+- [ ] A exportação em imagem deve capturar também essa lista de ações.
+
+## Mudanças Propostas
+
+### 1. Backend (`api/dashboard-metrics.js`)
+- **[MODIFY]** Alterar a recepção de parâmetros: ao invés de apenas `?periodo=24h`, aceitar `data_inicio` e `data_fim` para um filtro cirúrgico, com um padrão (fallback) de 12 horas atrás até o momento atual.
+- **[NEW]** Adicionar uma nova query SQL que busca as últimas intervenções do período filtrado:
+  ```sql
+  SELECT e.nome as maquina, i.causa_raiz, i.severidade, i.criado_em, i.downtime_evitado_horas 
+  FROM intervencoes i
+  JOIN equipamentos e ON i.equipamento_id = e.id
+  WHERE i.criado_em BETWEEN $1 AND $2
+  ORDER BY i.criado_em DESC
+  ```
+
+### 2. Interface do Dashboard (`src/pages/Dashboard.jsx`)
+- **[MODIFY]** Substituir o botão "Turno (24h)" por dois campos de data/hora (Início e Fim) com um botão rápido de atalho para "Últimas 12h".
+- **[NEW]** Criar uma seção visual "Histórico de Ações do Turno" (uma tabela ou lista de cards elegantes) que mostra a máquina, o que foi feito (causa raiz), se foi definitivo e as horas salvas de cada ação isolada.
+
+> [!IMPORTANT]
+> ## Revisão Necessária
+> 1. Para os filtros de turno, você prefere **campos de preenchimento livre** (Data e Hora inicial / Data e Hora final) ou prefere **botões fixos** (ex: "Turno Manhã 06:00 - 18:00" e "Turno Noite 18:00 - 06:00")? Campos livres dão mais poder, mas botões fixos são mais rápidos. Qual a rotina dos seus gestores?
+> 2. O feed de ações pode ficar logo abaixo do Radar de Risco no PDF exportado. De acordo?
