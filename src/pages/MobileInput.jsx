@@ -4,6 +4,8 @@ import { Mic, Send, CheckCircle, AlertTriangle, Loader2 } from 'lucide-react';
 export default function MobileInput() {
   const [equipamentos, setEquipamentos] = useState([]);
   const [selectedEquip, setSelectedEquip] = useState('');
+  const [dataInicio, setDataInicio] = useState('');
+  const [dataFim, setDataFim] = useState('');
   const [textoBruto, setTextoBruto] = useState('');
   const [status, setStatus] = useState('idle'); // idle, loading, success, error
   const [iaFeedback, setIaFeedback] = useState(null);
@@ -20,7 +22,7 @@ export default function MobileInput() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!selectedEquip || !textoBruto.trim()) return;
+    if (!selectedEquip || !textoBruto.trim() || !dataInicio || !dataFim) return;
 
     setStatus('loading');
     try {
@@ -29,7 +31,9 @@ export default function MobileInput() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           nome_equipamento: selectedEquip,
-          texto_bruto: textoBruto
+          texto_bruto: textoBruto,
+          data_inicio: dataInicio,
+          data_fim: dataFim
         })
       });
       
@@ -39,6 +43,8 @@ export default function MobileInput() {
         setStatus('success');
         setIaFeedback(data.extraido);
         setTextoBruto(''); // Limpar campo
+        setDataInicio('');
+        setDataFim('');
         
         // Voltar ao normal após 5 segundos
         setTimeout(() => {
@@ -85,6 +91,35 @@ export default function MobileInput() {
               <option key={eq.id} value={eq.nome} />
             ))}
           </datalist>
+        </div>
+
+        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
+          <div style={{ flex: 1 }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+              Início
+            </label>
+            <input 
+              type="datetime-local" 
+              className="input-field"
+              value={dataInicio}
+              onChange={e => setDataInicio(e.target.value)}
+              required
+              disabled={status === 'loading'}
+            />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+              Fim
+            </label>
+            <input 
+              type="datetime-local" 
+              className="input-field"
+              value={dataFim}
+              onChange={e => setDataFim(e.target.value)}
+              required
+              disabled={status === 'loading'}
+            />
+          </div>
         </div>
 
         <div style={{ marginBottom: '1.5rem' }}>

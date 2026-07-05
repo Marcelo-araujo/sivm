@@ -6,10 +6,10 @@ export default async function handler(request, response) {
     return response.status(405).json({ error: 'Método não permitido' });
   }
 
-  const { nome_equipamento, texto_bruto } = request.body;
+  const { nome_equipamento, texto_bruto, data_inicio, data_fim } = request.body;
 
-  if (!nome_equipamento || !texto_bruto) {
-    return response.status(400).json({ error: 'nome_equipamento e texto_bruto são obrigatórios' });
+  if (!nome_equipamento || !texto_bruto || !data_inicio || !data_fim) {
+    return response.status(400).json({ error: 'Todos os campos são obrigatórios' });
   }
 
   try {
@@ -67,7 +67,9 @@ export default async function handler(request, response) {
         severidade, 
         tempo_risco_horas, 
         downtime_evitado_horas, 
-        resolvido_definitivo
+        resolvido_definitivo,
+        data_inicio,
+        data_fim
       ) VALUES (
         ${equipId},
         ${texto_bruto},
@@ -76,7 +78,9 @@ export default async function handler(request, response) {
         ${iaData.severidade},
         ${iaData.tempo_risco_horas},
         ${iaData.downtime_evitado_horas},
-        ${iaData.resolvido_definitivo}
+        ${iaData.resolvido_definitivo},
+        ${data_inicio},
+        ${data_fim}
       ) RETURNING id;
     `;
 
