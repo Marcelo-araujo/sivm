@@ -220,40 +220,36 @@ export default function Dashboard() {
           ) : acoes.length === 0 ? (
              <div className="flex-center" style={{ color: 'var(--text-secondary)' }}>Nenhuma intervenção registrada neste período.</div>
           ) : (
-             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '700px' }}>
-               <thead>
-                 <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-secondary)' }}>
-                   <th style={{ padding: '10px 0' }}>Data/Hora</th>
-                   <th style={{ padding: '10px 0' }}>Máquina</th>
-                   <th style={{ padding: '10px 0' }}>Causa Raiz (Ação)</th>
-                   <th style={{ padding: '10px 0' }}>Severidade</th>
-                   <th style={{ padding: '10px 0', textAlign: 'right' }}>Horas Salvas</th>
-                 </tr>
-               </thead>
-               <tbody>
-                 {acoes.map(acao => (
-                   <tr key={acao.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                     <td style={{ padding: '12px 0', fontSize: '0.9rem' }}>
-                        {new Date(acao.data_ocorrencia).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}
-                     </td>
-                     <td style={{ padding: '12px 0', fontWeight: 'bold' }}>{acao.maquina}</td>
-                     <td style={{ padding: '12px 0', fontSize: '0.9rem', color: '#ccc' }}>{acao.causa_raiz}</td>
-                     <td style={{ padding: '12px 0' }}>
-                       <span style={{ 
-                         padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 600,
-                         background: acao.severidade === 'Crítica' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(255, 255, 255, 0.1)',
-                         color: acao.severidade === 'Crítica' ? '#ef4444' : '#fff'
-                       }}>
-                         {acao.severidade}
-                       </span>
-                     </td>
-                     <td style={{ padding: '12px 0', textAlign: 'right', fontWeight: 'bold', color: '#4ade80' }}>
+             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+               {acoes.map(acao => (
+                 <div key={acao.id} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '8px', padding: '1rem', border: '1px solid rgba(255,255,255,0.05)' }}>
+                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                     <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                       {new Date(acao.data_ocorrencia).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}
+                     </span>
+                     <span style={{ 
+                       padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600,
+                       background: acao.severidade === 'Crítica' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+                       color: acao.severidade === 'Crítica' ? '#ef4444' : '#fff'
+                     }}>
+                       {acao.severidade}
+                     </span>
+                   </div>
+                   <div style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: '0.25rem', color: '#fff' }}>
+                     {acao.maquina}
+                   </div>
+                   <div style={{ fontSize: '0.9rem', color: '#ccc', marginBottom: '1rem', lineHeight: '1.4' }}>
+                     {acao.causa_raiz}
+                   </div>
+                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '0.75rem' }}>
+                     <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Downtime Evitado</span>
+                     <span style={{ fontWeight: 'bold', color: '#4ade80' }}>
                        {acao.downtime_evitado_horas > 0 ? `+${acao.downtime_evitado_horas}h` : '-'}
-                     </td>
-                   </tr>
-                 ))}
-               </tbody>
-             </table>
+                     </span>
+                   </div>
+                 </div>
+               ))}
+             </div>
           )}
         </div>
       </div>
