@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { Activity, CheckCircle, Clock, AlertTriangle, Download } from 'lucide-react';
+import { Activity, CheckCircle, Clock, AlertTriangle, Download, FileText } from 'lucide-react';
 import * as htmlToImage from 'html-to-image';
+import { jsPDF } from 'jspdf';
+
 
 export default function Dashboard() {
   const [metrics, setMetrics] = useState(null);
@@ -77,21 +79,85 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, []);
 
-  const exportDashboard = () => {
-    if (dashboardRef.current) {
-      htmlToImage.toPng(dashboardRef.current, { backgroundColor: '#111827' })
-        .then(function (dataUrl) {
-          const link = document.createElement('a');
-          link.download = `sivm-relatorio-${new Date().toISOString().split('T')[0]}.png`;
-          link.href = dataUrl;
-          link.click();
-        })
-        .catch(function (error) {
-          console.error('Erro ao exportar dashboard:', error);
-          alert('Não foi possível exportar a imagem.');
-        });
+  const exportDashboard = async () => {
+    if (!dashboardRef.current) return;
+    try {
+      // 1. Geramos a imagem com pixelRatio: 2 (alta definição) para aguentar a compressão do WhatsApp
+      const dataUrl = await htmlToImage.toPng(dashboardRef.current, { 
+        backgroundColor: '#111827',
+        pixelRatio: 2,
+        style: {
+          transform: 'scale(1)',
+        }
+      });
+
+      // 2. Tenta compartilhar diretamente usando a Web Share API se suportado (comum em celulares)
+      if (navigator.share && navigator.canShare) {
+        const response = await fetch(dataUrl);
+        const blob = await response.blob();
+        const file = new File([blob], `sivm-relatorio-${new Date().toISOString().split('T')[0]}.png`, { type: 'image/png' });
+
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: 'Relatório SIVM',
+            text: 'Confira a Visibilidade Operacional do SIVM',
+          });
+          return;
+        }
+      }
+
+      // Fallback para download convencional
+      const link = document.createElement('a');
+      link.download = `sivm-relatorio-${new Date().toISOString().split('T')[0]}.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (error) {
+      console.error('Erro ao exportar dashboard:', error);
+      alert('Não foi possível exportar a imagem.');
     }
   };
+
+  const exportDashboardPDF = async () => {
+    if (!dashboardRef.current) return;
+    try {
+      // 1. Gera a imagem do elemento com alta densidade de pixels (pixelRatio: 2)
+      const dataUrl = await htmlToImage.toPng(dashboardRef.current, { 
+        backgroundColor: '#111827',
+        pixelRatio: 2,
+        style: {
+          transform: 'scale(1)',
+        }
+      });
+      
+      // 2. Cria o documento PDF (formato A4 em paisagem 'l')
+      const pdf = new jsPDF('l', 'mm', 'a4');
+      const imgProps = pdf.getImageProperties(dataUrl);
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      
+      // Mantém a proporção da imagem com margem de 10mm
+      const ratio = imgProps.width / imgProps.height;
+      let width = pdfWidth - 20; 
+      let height = width / ratio;
+      
+      if (height > (pdfHeight - 20)) {
+        height = pdfHeight - 20;
+        width = height * ratio;
+      }
+      
+      const x = (pdfWidth - width) / 2;
+      const y = (pdfHeight - height) / 2;
+      
+      pdf.addImage(dataUrl, 'PNG', x, y, width, height);
+      pdf.save(`sivm-relatorio-${new Date().toISOString().split('T')[0]}.pdf`);
+    } catch (error) {
+      console.error('Erro ao exportar PDF:', error);
+      alert('Não foi possível exportar o PDF.');
+    }
+  };
+
 
   const getColor = (status) => {
     if (status === 'Vermelho') return 'var(--status-red)';
@@ -147,13 +213,24 @@ export default function Dashboard() {
             Filtrar
           </button>
           
-          <button 
-            onClick={exportDashboard}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#3b82f6', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', fontWeight: 600, cursor: 'pointer', marginLeft: 'auto' }}
-          >
-            <Download size={16} />
-            Exportar
-          </button>
+          <div style={{ display: 'flex', gap: '0.5rem', marginLeft: 'auto', flexWrap: 'wrap' }}>
+            <button 
+              onClick={exportDashboard}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#3b82f6', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', fontWeight: 600, cursor: 'pointer' }}
+            >
+              <Download size={16} />
+              PNG Alta Resolução
+            </button>
+            
+            <button 
+              onClick={exportDashboardPDF}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#10b981', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', fontWeight: 600, cursor: 'pointer' }}
+            >
+              <FileText size={16} />
+              PDF (Ideal WhatsApp)
+            </button>
+          </div>
+
         </div>
       </div>
 
